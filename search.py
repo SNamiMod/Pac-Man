@@ -73,35 +73,30 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 def depthFirstSearch(problem):
-    
     nodeStack = util.Stack()
     checked = []
-    actions = []
     startState = problem.getStartState()
-    if (problem.isGoalState(startState)):
-        print("We achieved the Goal - First State")
-        #return actions
-    else:
-        nodeStack.push((startState, actions))
+    nodeStack.push((startState, []))
 
-    while nodeStack.isEmpty() == False:
+    while not(nodeStack.isEmpty()):
         state, actions = nodeStack.pop()
-        childNodes = problem.getSuccessors(state)
-        isChecked = 0
-        for node in childNodes:
-            for temp in checked:
-                if node[0] == temp:
-                    isChecked = 1
-            if isChecked == 0:
-                if problem.isGoalState(node[0]):
-                    print("We achieved the Goal")
-                    print(actions)
-                    return actions
-                else:
-                    temp = actions + [node[1]]
-                    nodeStack.push( (node[0], actions) )
-                    checked.append(state)
+        if problem.isGoalState(state):
+            print("We achieved the Goal")
+            print(actions)
+            return actions
+        else:
+            checked.append(state)
+            childNodes = problem.getSuccessors(state)
             isChecked = 0
+            for node in childNodes:
+                for temp in checked:
+                    if node[0] == temp:
+                        isChecked = 1
+                if isChecked == 0:
+                    temp = actions + [node[1]]
+                    nodeStack.push((node[0], temp))
+
+                isChecked = 0
 
     print("Cant find the Goal")
     return None
