@@ -78,29 +78,27 @@ def depthFirstSearch(problem):
     startState = problem.getStartState()
     nodeStack.push(startState)
     nodeStack.push([])
-    while not(nodeStack.isEmpty()):
+
+    while nodeStack.isEmpty() == 0:
         actions = nodeStack.pop()
         state = nodeStack.pop()
-        childNodes = problem.getSuccessors(state)
-        if childNodes != None:
-            isChecked = 0
-            for node in childNodes:
+
+        if problem.isGoalState(state):
+            checked.append(state)
+            return actions
+        else:
+            checked.append(state)
+            childNodes = problem.getSuccessors(state)
+            for child in childNodes:
+                isChecked = 0
                 for temp in checked:
-                    if node[0] == temp:
+                    if child[0] == temp:
                         isChecked = 1
                 if isChecked == 0:
-                    temp = actions + [node[1]]
-                    if (problem.isGoalState(node[0])):
-                        print("we achieved the goal")
-                        print(temp)
-                        return temp
-                    else:
-                        checked.append(node[0])
-                        nodeStack.push(node[0])
-                        nodeStack.push(temp)
-                isChecked = 0
-
-    print("Cant find the goal")
+                    nodeStack.push(child[0])
+                    childActions = actions + [child[1]]
+                    nodeStack.push(childActions)
+                isChecked = 1
     return None
 
 def breadthFirstSearch(problem):
