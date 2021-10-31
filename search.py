@@ -17,6 +17,7 @@ In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 """
 
+import heapq
 import util
 
 class SearchProblem:
@@ -109,11 +110,16 @@ def breadthFirstSearch(problem):
     checked = []
     nodes = set([])
     startState = problem.getStartState()
-    nodeQueue.push((startState , []))
+    item = []
+    item = item + [startState]
+    item = item + [[]]
+    nodeQueue.push(item)
     nodes.add(startState)
     # pop , check , not goal -> push childNodes
     while nodeQueue.isEmpty() == 0:
-        state ,actions = nodeQueue.pop()
+        popItem = nodeQueue.pop()
+        state = popItem[0]
+        actions = popItem[1]
         nodes.discard(state)
         if problem.isGoalState(state):
             checked.append(state)
@@ -138,7 +144,10 @@ def breadthFirstSearch(problem):
                     if isInNodes == 0:
                         nodes.add(child[0])
                         childActions = actions + [child[1]]
-                        nodeQueue.push((child[0],childActions))
+                        item = []
+                        item = item + [child[0]]
+                        item = item + [childActions]
+                        nodeQueue.push(item)
                     else:
                         isInNodes = 0
                 else:
@@ -146,11 +155,63 @@ def breadthFirstSearch(problem):
     else:
         return None
 #----------------------------------------------
-def uniformCostSearch(problem):
-    """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+def getCost(problem , nodePriorityQueue , child):
+    cost = -1
+    for temp in nodePriorityQueue.heap:
+        if child[0] == temp[2][0]:
+            cost = problem.getCostOfActions(temp[2][1])
+            break
+            # we have the node
+    return cost
 
+def uniformCostSearch(problem):
+    nodePriorityQueue = util.PriorityQueue()
+    checked = []
+    startState = problem.getStartState()
+    item = []
+    item = item + [startState]
+    item = item + [[]]
+    nodePriorityQueue.push(item, 0)
+    # pop , check , not goal -> push childNodes with costs
+    while nodePriorityQueue.isEmpty() == 0:
+        popItem = nodePriorityQueue.pop()
+        state = popItem[0]
+        actions = popItem[1]
+        if problem.isGoalState(state):
+            checked.append(state)
+            return actions
+        else:
+            checked.append(state)
+            childNodes = problem.getSuccessors(state)
+            isChecked = 0
+            for child in childNodes:
+                for temp in checked:
+                    if child[0] == temp:
+                        isChecked = 1
+                        break
+                        # we have checked the node
+                if isChecked == 0 :
+                    cost = getCost(problem,nodePriorityQueue,child)
+                    if cost == -1:
+                        item = []
+                        item = item + [child[0]]
+                        childActions = actions + [child[1]]
+                        item = item + [childActions]
+                        childPrice = problem.getCostOfActions(childActions)
+                        nodePriorityQueue.push(item,childPrice)
+                    else:
+                        childActions = actions + [child[1]]
+                        childNewPrice = problem.getCostOfActions(childActions)
+                        if childNewPrice < cost:
+                            item = []
+                            item = item + [child[0]]
+                            item = item + [childActions]
+                            nodePriorityQueue.update(item,childNewPrice)
+                else:
+                    isChecked = 0
+    else:
+        return None
+#----------------------------------------------
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
