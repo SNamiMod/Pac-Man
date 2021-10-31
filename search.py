@@ -109,19 +109,16 @@ def depthFirstSearch(problem):
 def breadthFirstSearch(problem):
     nodeQueue = util.Queue()
     checked = []
-    nodes = set([])
     startState = problem.getStartState()
     item = []
     item = item + [startState]
     item = item + [[]]
     nodeQueue.push(item)
-    nodes.add(startState)
     # pop , check , not goal -> push childNodes
     while nodeQueue.isEmpty() == 0:
         popItem = nodeQueue.pop()
         state = popItem[0]
         actions = popItem[1]
-        nodes.discard(state)
         if problem.isGoalState(state):
             checked.append(state)
             return actions
@@ -137,13 +134,12 @@ def breadthFirstSearch(problem):
                         break
                         # we have checked the node
                 if isChecked == 0 :
-                    for temp in nodes:
-                        if child[0] == temp:
+                    for temp in nodeQueue.list:
+                        if child[0] == temp[0]:
                             isInNodes = 1
                             break
                             # we have the node
                     if isInNodes == 0:
-                        nodes.add(child[0])
                         childActions = actions + [child[1]]
                         item = []
                         item = item + [child[0]]
