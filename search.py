@@ -10,6 +10,7 @@
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
+# edited by : Seyed Nami Modarressi
 
 
 """
@@ -218,13 +219,60 @@ def nullHeuristic(state, problem=None):
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
+#----------------------------------------------
+def updatePriorityQueue(nodePriorityQueue, item, priority):
+    #this code was copied from util.py 
+    #I added some minor change to make it a proper function for my a* search
+    for index, (p, c, i) in enumerate(nodePriorityQueue.heap):
+        if i[0] == item[0] and p > priority:
+            del nodePriorityQueue.heap[index]
+            nodePriorityQueue.heap.append((priority, c, item))
+            heapq.heapify(nodePriorityQueue.heap)
+            break
+        elif i[0] == item[0] and p <= priority:
+            break
+    else:
+        nodePriorityQueue.push(item, priority)
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-    """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
-
+    nodePriorityQueue = util.PriorityQueue()
+    checked = []
+    startState = problem.getStartState()
+    item = []
+    item = item + [startState]
+    item = item + [[]]
+    heuristicValue = heuristic(startState, problem)
+    nodePriorityQueue.push(item, heuristicValue)
+    # pop , check , not goal -> push childNodes with costs
+    while nodePriorityQueue.isEmpty() == 0:
+        popItem = nodePriorityQueue.pop()
+        state = popItem[0]
+        actions = popItem[1] 
+        if problem.isGoalState(state):
+            checked.append(state)
+            return actions
+        else:
+            checked.append(state)
+            childNodes = problem.getSuccessors(state)
+            isChecked = 0
+            for child in childNodes:
+                for temp in checked:
+                    if child[0] == temp:
+                        isChecked = 1
+                        break
+                        # we have checked the node
+                if isChecked == 0 :
+                    item = []
+                    item = item + [child[0]]
+                    childActions = actions + [child[1]]
+                    item = item + [childActions]
+                    childNewCost = heuristic(child[0], problem) + problem.getCostOfActions(childActions)
+                    updatePriorityQueue(nodePriorityQueue,item,childNewCost)
+                else:
+                    isChecked = 0
+    else:
+        return None
+#----------------------------------------------
 # Abbreviations
 bfs = breadthFirstSearch
 dfs = depthFirstSearch
