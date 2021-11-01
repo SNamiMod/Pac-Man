@@ -294,7 +294,7 @@ class CornersProblem(search.SearchProblem):
         # space)
         # """
         # "*** YOUR CODE HERE ***"
-       startState = ([False,False,False,False] , self.startingPosition)
+       startState = (() , self.startingPosition)
        return startState
 
     def isGoalState(self, state):
@@ -302,7 +302,7 @@ class CornersProblem(search.SearchProblem):
         # Returns whether this search state is a goal state of the problem.
         # """
         # "*** YOUR CODE HERE ***"
-        if state[0] == [True,True,True,True]:
+        if len(state[0]) == 4:
             return True
         return False
     
@@ -328,32 +328,26 @@ class CornersProblem(search.SearchProblem):
             nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
             hitsWall = self.walls[nextx][nexty]
-            conditions = state[0][0:4]
+            checkedCorners = list(state[0])
             if hitsWall == False:
-                # Check if we have reached a corner in the new position #
-                counter = -1
                 for temp in self.corners:
-                    counter = counter + 1
-                    if temp == (nextx,nexty):
-                        conditions[counter] = True # This corner is visited
-
-                    nextState = (conditions,(nextx, nexty)) # Fix new state
-                    cost = 1
-                    successors.append((nextState,action,cost))
-                
-        self._expanded += 1 # DO NOT CHANGE
+                    if temp == (nextx, nexty):
+                        isChecked = 0
+                        for temp2 in checkedCorners:
+                            if temp2 == temp:
+                                isChecked = 1
+                        if isChecked == 0:
+                            checkedCorners.append(temp)
+                    successors.append(((tuple(checkedCorners) , (nextx, nexty)), action, 1))
+        self._expanded += 1
         return successors
 #----------------------------------------------
-
 def cornersHeuristic(state, problem):
     """
     A heuristic for the CornersProblem that you defined.
-
       state:   The current search state
                (a data structure you chose in your search problem)
-
       problem: The CornersProblem instance for this layout.
-
     This function should always return a number that is a lower bound on the
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
@@ -362,8 +356,30 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    #python pacman.py -l mediumCorners -p AStarCornersAgent -z 0.5
 
+    node = state[1]
+    Visited_Corners = state[0]
+    h_sum = 0
+    if problem.isGoalState(state):
+        return 0
+
+    un_Visited_Corner = []
+    for i in range(4):
+        if corners[i] not in Visited_Corners:
+            un_Visited_Corner.append(corners[i])
+
+    #print len(un_Visited_Corner)
+
+    cur_position = node
+    while(len(un_Visited_Corner)!=0):
+        distance, corner = min( [(util.manhattanDistance(cur_position ,corner),corner) for corner in un_Visited_Corner] )
+        h_sum = h_sum + distance
+        cur_position = corner
+        un_Visited_Corner.remove(corner) 
+
+    return h_sum # Default to trivial solution
+#----------------------------------------------
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
@@ -425,7 +441,7 @@ class AStarFoodSearchAgent(SearchAgent):
     def __init__(self):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
-
+#----------------------------------------------
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -456,8 +472,19 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    
+    if problem.isGoalState(state):
+        return 0
 
+    # Find real distances between position and all of the food #
+    max = 0
+    for item in foodGrid.asList():
+        # d = util.manhattanDistance(item,position)
+        d = mazeDistance(item,position,problem.startingGameState)
+        if max < d:
+            max = d
+    return max
+#----------------------------------------------
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
     def registerInitialState(self, state):
@@ -476,19 +503,17 @@ class ClosestDotSearchAgent(SearchAgent):
         print('Path found with cost %d.' % len(self.actions))
 
     def findPathToClosestDot(self, gameState):
-        """
-        Returns a path (a list of actions) to the closest dot, starting from
-        gameState.
-        """
+    #    """
+    #     Returns a path (a list of actions) to the closest dot, starting from
+    #     gameState.
+    #     """
         # Here are some useful elements of the startState
         startPosition = gameState.getPacmanPosition()
         food = gameState.getFood()
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
-
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        return search.breadthFirstSearch(problem)
+#----------------------------------------------
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
     A search problem for finding a path to any food.
@@ -521,10 +546,14 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         complete the problem definition.
         """
         x,y = state
+        value = self.food[x][y]
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        if value == None:
+            return False
+        else:
+            return value
+#----------------------------------------------
 def mazeDistance(point1, point2, gameState):
     """
     Returns the maze distance between any two points, using the search functions
